@@ -1,6 +1,7 @@
 #ifndef __KEY_H__
 #define __KEY_H__
 
+    #include <STC12C5A60S2.H>
     #include "Menu.h"
 
     #define BUZZER_SHORT_VOICE 1000

@@ -1,30 +1,4 @@
- /*****************************************************************************
- * File Name     : main.c
- * Author        : Mr_Liang
- * Date          : 2016/09/20
- * Description   : .C file function description
- * Version       : 3.1
- *
- * Record        :
- * 1.Date        : 2016/07/20
- *   Author      : Mr_Liang
- *   Modification: Created file
-*****************************************************************************/
-
-/*
-
-ĞŞ¸ÄÁË "STARTUP.A51" ÎÄ¼şÖĞµÄ XDATALEN ²ÎÊı
-Ê¹µ¥Æ¬»úÉÏµç³õÊ¼»¯ xdata Çø
-¸ù¾İ STC15W4K32S4 µÄÊı¾İÊÖ²á£¬xdataµÄµØÖ·Îª 0H - EFFH
-Òò´Ë£¬  ĞŞ¸ÄºóµÄ XDATALEN ²ÎÊıÎª 0xF00 Ê®½øÖÆÎª 3840
-
-ps: Èç¹û²»ĞŞ¸ÄÕâ¸ö²ÎÊıµÄ»°£¬Ã¿¸ö´æ´¢ÔÚxdataµÄ±äÁ¿¶¼ĞèÒªÔÚÉùÃ÷Ê±³õÊ¼»¯£¬²»È»Êı¾İ¿ÉÄÜÊÇÂÒÂë¡£
-    E.G. :
-            unsigned char xdata i = 0;
-            unsigned int  xdata Arr[10] = {0};
-
-*/
-#include <STC15.h>
+#include <STC12C5A60S2.H>
 
 #include "Config.h"
 #include "12864.h"
@@ -33,28 +7,25 @@ ps: Èç¹û²»ĞŞ¸ÄÕâ¸ö²ÎÊıµÄ»°£¬Ã¿¸ö´æ´¢ÔÚxdataµÄ±äÁ¿¶¼ĞèÒªÔÚÉùÃ÷Ê±³õÊ¼»¯£¬²»È»Êı¾İ¿
 #include "Uart.h"
 #include "Menu.h"
 #include "Key.h"
-#include "LED.h"
-
-#include "Message.h"
 
 void IO_Init();
 
 void main()
-{    
+{
+    Delay_Xms(200);
+    IO_Init();
     Timer0_Init();
     Uart_Init();
-    IO_Init();
     Lcd_Init();
+
+    BACK_LED = 0;
 
     ENABLE_ALL_INTERRUPTS;
 
-    LED_Handle(LED_7, LED_BLINK_LONG);
-    
-    while(1)
+    while (1)
     {
-        // MenuGeneralSet();
         Menu_Service(pfCurrentFunc);
-        // KeyService();
+        UartSendDebugInfo("while\r\n");
     }
 }
 
@@ -72,10 +43,6 @@ void IO_Init()
     P4M1 = 0x00;
     P5M0 = 0x00;
     P5M1 = 0x00;
-    P6M0 = 0x00;
-    P6M1 = 0x00;
-    P7M0 = 0x00;
-    P7M1 = 0x00;
 
     UartSendDebugInfo("IO      Init_Successfully :)\r\n");
 }

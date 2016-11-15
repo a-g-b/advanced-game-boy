@@ -1,13 +1,11 @@
-#include <STC15.h>
-
 #include "Config.h"
 #include "12864.h"
 #include "Delay.h"
 #include "Uart.h"
 #include "Menu.h"
 #include "Key.h"
-#include "LED.h"
-#include "Snake.h"
+#include "Game_Pong.h"
+#include "Game_Snake.h"
 
 #include "pic12864.h"
 
@@ -17,8 +15,8 @@ MENU_PRMT xdata Main_MenuParam;
 
 MENU_ITEM code Main_MenuItem[] =                       
 {
-    {"1. Fun Games    ", Menu_Games},
-    {"2. Setting      ", Menu_Setting},
+    {"1. Fun Games    ", Menu_Games     },
+    {"2. Setting      ", Menu_Setting   },
     {"3. About System ", Menu_SystemInfo},               
 };
 
@@ -36,7 +34,7 @@ MENU_PRMT xdata Games_MenuParam;
 
 MENU_ITEM code Games_MenuItem[] =                           
 {
-    {"1. Pong         ", Menu_Null_Info},                 
+    {"1. Pong         ", PongGame_Main },//Menu_Null_Info },      
     {"2. Greedy Snake ", SnakeGame_Main},                 
     {"3. Tetris       ", Menu_Null_Info},                 
     {"4.  NULL        ", Menu_Null_Info},                   
@@ -74,8 +72,9 @@ bit fClrDDRAM = TRUE;               // 屏幕清屏(DDRAM)标志 - 顺便刷新menuName
 bit fMenuParamInit = TRUE;          // 菜单参数初始化标志
 bit fCursorInit = TRUE;             // 光标位置初始化标志
 
-//xdata void(*pfCurrentFunc)(void) = &Menu_Main;     // 指向当前运行的菜单函数的函数指针
-xdata void(*pfCurrentFunc)(void) = &SnakeGame_Main;     // 指向当前运行的菜单函数的函数指针
+xdata void(*pfCurrentFunc)(void) = &Menu_Games;     // 指向当前运行的菜单函数的函数指针
+//xdata void(*pfCurrentFunc)(void) = &PongGame_Main;     // 指向当前运行的菜单函数的函数指针
+//xdata void(*pfCurrentFunc)(void) = &Menu_SplashScreen;     // 指向当前运行的菜单函数的函数指针
 
 static void Menu_ParamInit(MENU_PRMT xdata *param, u8 num, u8 page);
 static void Menu_Display(MENU_ITEM code *menu, u8 page, u8 dispNum, u8 cursor);
@@ -277,11 +276,7 @@ static void Menu_Move(MENU_PRMT xdata *param, MENU_INFO code *menuInfo)
 *****************************************************************************/
 static void Menu_Process(MENU_INFO code *menuInfo, MENU_PRMT xdata *param)
 {
-    LED_Handle(LED_2, LED_ON);              // Debug
-    
-    LED_Handle(LED_3, LED_ON);
     Menu_Move(param, menuInfo);
-    LED_Handle(LED_3, LED_OFF);
     
     if (fClrDDRAM) 
     {
@@ -303,12 +298,8 @@ static void Menu_Process(MENU_INFO code *menuInfo, MENU_PRMT xdata *param)
     {
         fKeyTrig = FALSE;
 
-        LED_Handle(LED_4, LED_ON);
         Menu_Display(menuInfo->psItem, param->PageNo, param->DispNum, param->Cursor);               // 显示菜单项
-        LED_Handle(LED_4, LED_OFF);
     }
-
-    LED_Handle(LED_2, LED_OFF);              // Debug
 }
 
 /*****************************************************************************
@@ -343,6 +334,7 @@ void Menu_Main(void)
 void Menu_Games(void)
 {
     pfCurrentFunc = &Menu_Games;
+//    KeyValue = KV_ENTER;
 
     Menu_Process(&Games_MenuInfo, &Games_MenuParam);
 }
@@ -400,6 +392,7 @@ void Menu_SplashScreen(void)
         LcdWrCmd(EN_EXT_INSTRUCTION);
         LcdClrGDRAM();
         LcdDrawG_12864(zhizhang);
+        UartSendDebugInfo("generate\r\n");
     }
 
     if (KeyValue == KV_ENTER) 
@@ -422,7 +415,7 @@ void Menu_SystemInfo(void)
         
         LcdWrCmd(CLR_DDRAM_INIT_AC);
 
-        LcdPutStr(0, 0, 0, "Version: V3.5.2");
+        LcdPutStr(0, 0, 0, "Version: V4.0.0");
         LcdPutStr(0, 1, 0, "Compile Info:");
         LcdPutStr(1, 2, 0, __DATE__);
         LcdPutStr(1, 3, 0, __TIME__);

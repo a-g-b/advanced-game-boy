@@ -1,12 +1,12 @@
-#include <STC15.h>
-
 #include "Config.h"
 #include "12864.h"
 #include "Uart.h"
 #include "Key.h"
-#include "LED.h"
-#include "Snake.h"
+#include "Game_Snake.h"
 
+volatile u16 xdata FreqCnt = 0;
+
+/*
 void Timer0_Init(void)      //100us @24.000MHz
 {
     AUXR |= 0x80;   //定时器时钟1T模式
@@ -17,13 +17,29 @@ void Timer0_Init(void)      //100us @24.000MHz
     ET0 = 1;
     TR0 = 1;        //定时器0开始计时
 }
+*/
+
+void Timer0_Init(void)       //100us@11.0592MHz
+{
+    AUXR |= 0x80;       //Timer clock is 1T mode
+    TMOD &= 0xF0;       //Set timer work mode
+    TMOD |= 0x01;       //Set timer work mode
+    TL0 = 0xAE;     //Initial timer value
+    TH0 = 0xFB;     //Initial timer value
+    TF0 = 0;        //Clear TF0 flag
+    ET0 = 1;
+    TR0 = 1;        //Timer0 start run
+}
 
 void Timer0_ISR() interrupt 1   // 100us
 {
     static u8  n500ms;
     static u16 TimerCnt;
     static bit b_1msFlag, b_10msFlag, b_100msFlag;
-    
+
+    TL0 = 0xAE;     //Initial timer value
+    TH0 = 0xFB;     //Initial timer value
+//    UartSendDebugInfo("Timer\r\n");
     TimerCnt++;
     if ((TimerCnt % 10) == 0)
     {
@@ -48,7 +64,6 @@ void Timer0_ISR() interrupt 1   // 100us
     if (b_10msFlag)
     {
         b_10msFlag = 0;
-        LED_Service();
     }
     if (b_100msFlag)
     {

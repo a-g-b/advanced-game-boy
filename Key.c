@@ -1,5 +1,3 @@
-#include <STC15.h>
-
 #include "Config.h"
 #include "Key.h"
 
@@ -70,8 +68,8 @@ KV_ENUM Key_GetKV(void)
 */
 
 void Key_Scan() {
-    static u8   KeyCnt1, KeyCnt2, KeyCnt3, KeyCnt4;
-    static bit  KeyLock1, KeyLock2, KeyLock3, KeyLock4;
+    static u8 xdata KeyCnt1, KeyCnt2, KeyCnt3, KeyCnt4, KeyCnt5, KeyCnt6;
+    static bit      KeyLock1, KeyLock2, KeyLock3, KeyLock4, KeyLock5, KeyLock6;
 
     if (KEY1 == 1) {
         KeyLock1 = 0;
@@ -108,7 +106,7 @@ void Key_Scan() {
         if (KeyCnt3 > KEY3_DELAY) {
             KeyCnt3 = 0;
             KeyLock3 = 1;
-            KeyValue = KV_ENTER;
+            KeyValue = KV_LEFT;
             BuzzerVoice = BUZZER_SHORT_VOICE;
         }
     }
@@ -121,6 +119,32 @@ void Key_Scan() {
         if (KeyCnt4 > KEY4_DELAY) {
             KeyCnt4 = 0;
             KeyLock4 = 1;
+            KeyValue = KV_RIGHT;
+            BuzzerVoice = BUZZER_SHORT_VOICE;
+        }
+    }
+    if (KEY5 == 1) {
+        KeyLock5 = 0;
+        KeyCnt5= 0;
+    }
+    else if (KeyLock5 == 0) {
+        KeyCnt5++;
+        if (KeyCnt5 > KEY3_DELAY) {
+            KeyCnt5 = 0;
+            KeyLock5 = 1;
+            KeyValue = KV_ENTER;
+            BuzzerVoice = BUZZER_SHORT_VOICE;
+        }
+    }
+    if (KEY6 == 1) {
+        KeyLock6 = 0;
+        KeyCnt6 = 0;
+    }
+    else if (KeyLock6 == 0) {
+        KeyCnt6++;
+        if (KeyCnt6 > KEY4_DELAY) {
+            KeyCnt6 = 0;
+            KeyLock6 = 1;
             KeyValue = KV_ESC;
             BuzzerVoice = BUZZER_SHORT_VOICE;
         }

@@ -19,6 +19,5 @@ void SnakeGame_Main(void);
 
 extern bit fNewFood;
 extern volatile u16 xdata GmScore;
-extern volatile u16 xdata FreqCnt;
 
 #endif /* __SNAKE_H__ */

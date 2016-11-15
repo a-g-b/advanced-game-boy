@@ -1,15 +1,16 @@
 #ifndef __12864_H__
 #define __12864_H__
 
-#include <STC15.h>
+#include <STC12C5A60S2.H>
 #include "Config.h"
 
-sbit LCD_E  = P4^1;
-sbit LCD_RS = P3^6;
-sbit LCD_RW = P4^2;
-sbit PSB    = P1^7;
+sbit LCD_RS   = P3^5;
+sbit LCD_RW   = P3^6;
+sbit LCD_E    = P3^7;
+sbit BACK_LED = P3^4;
+//sbit PSB    = P1^7;
 
-#define LCD_DATA_PORT P2
+#define LCD_DATA_PORT P0
 
 /*****LCDπ¶ƒ‹÷∏¡Ó*****/
 
@@ -204,6 +205,7 @@ void LcdClrGDRAM(void);
 typedef enum {
     OFF,
     ON,
+    REVERSE,
 } PIXEL_STATE;
 void LcdDrawPoint( u8 X, u8 Y, PIXEL_STATE color );
 void LcdDrawFigure(u8 X, u8 Y, u8 DispFigure, PIXEL_STATE color);

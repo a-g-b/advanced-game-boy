@@ -1,27 +1,24 @@
 #include "Delay.h"
 #include "Config.h"
 
-void Delay1us()     //@24.000MHz
+void Delay1us()     //@11.0592MHz
 {
-    u8 i;
-
     _nop_();
-    _nop_();
-    i = 2;
-    while (--i);
 }
 
-void Delay1ms()     //@24.000MHz
+void Delay1ms()     //@11.0592MHz
 {
-    u8 i, j;
+    unsigned char i, j;
 
-    i = 24;
-    j = 85;
+    _nop_();
+    i = 11;
+    j = 190;
     do
     {
         while (--j);
     } while (--i);
 }
+
 
 void Delay_Xus(u16 i) 
 {

@@ -1,13 +1,11 @@
-#include <STC15.h>
-
 #include "Config.h"
 #include "12864.h"
 #include "Delay.h"
 #include "Uart.h"
 #include "Menu.h"
+#include "Timer.h"
 #include "Key.h"
-#include "LED.h"
-#include "Snake.h"
+#include "Game_Snake.h"
 
 // x-axis   0 - 30
 // y-axis   0 - 12
@@ -94,14 +92,12 @@ typedef struct
 bit fNewFood  = FALSE;
 
 volatile u16 xdata GmScore = 0;
-volatile u16 xdata FreqCnt = 0;
-
-static u8 Hertz = 0;
+//volatile u16 xdata FreqCnt = 0;
 
 static bit fClrTail = FALSE;
-//u8 GmStartLevel,GmLevel;
-static   u8  xdata SkTailCoorX, 
-                   SkTailCoorY;
+
+static u8 xdata SkTailCoorX, 
+                SkTailCoorY;
 
 static NODE_DIR xdata SkTailDir;
 
@@ -301,9 +297,8 @@ static void _draw_food(u8 nFd)
     Food[nFd].State = OCCUPY;
 */
 
-    _draw_block(Food[nFd].X, 
-                Food[nFd].Y, 
-                ON);
+    _draw_block(Food[nFd].X, Food[nFd].Y, ON);
+
     LcdWrCmd(EXT_GRAPH_ON);
 
 /*
@@ -399,7 +394,8 @@ static void FoodDisp(void)
 */
 }
 
-void _draw_str_three_dig(u8 x, u8 y, u16 dispFigure)
+/*
+static void _draw_str_three_dig(u8 x, u8 y, u16 dispFigure)
 {
     u8 xdata digit[3];
     u8 xdata i,
@@ -421,6 +417,7 @@ void _draw_str_three_dig(u8 x, u8 y, u16 dispFigure)
         x -= 6;                 // 每个数字的间隔 >= 5
     }
 }
+*/
 
 /*****************************************************************************
  * Function      : DispScore
@@ -432,6 +429,10 @@ void _draw_str_three_dig(u8 x, u8 y, u16 dispFigure)
  * 1.Date        : 10/05/2016
  *   Author      : Mr_Liang
  *   Modification: Created function
+ *
+ * 2.Date        : 10/15/2016
+ *   Author      : Mr_Liang
+ *   Modification: Optimizing execution time
 *****************************************************************************/
 static void DataDisp(void)
 {
@@ -548,8 +549,8 @@ static u8 _judge_dir_validity(NODE_DIR skDir)
 {
 #if defined(SNAKE_DISABLE_SUICIDE) 
 
-    u8       NodeCnt;
-    u8       tmpX, tmpY;
+    u8 NodeCnt;
+    u8 tmpX, tmpY;
     
     tmpX = Snake.Node[0].X;
     tmpY = Snake.Node[0].Y;
@@ -612,28 +613,24 @@ static void _kv_judge_dir(void)
     {
         case KV_UP:                  // SNAKE move up
             KeyValue = KV_NULL; 
-            LED_Handle(LED_5, LED_BLINK_SHORT);
             SkDir = UP;
             fKT   = 1;
                 break;
     
-        case KV_ENTER:               // SNAKE move right
+        case KV_RIGHT:               // SNAKE move right
             KeyValue = KV_NULL;    
-            LED_Handle(LED_6, LED_BLINK_SHORT);
             SkDir    = RIGHT;
             fKT      = 1;
                 break;
                 
-        case KV_ESC:                 // SNAKE move down
+        case KV_DOWN:                 // SNAKE move down
             KeyValue = KV_NULL;   
-            LED_Handle(LED_7, LED_BLINK_SHORT);
             SkDir    = DOWN;
             fKT      = 1;
                 break;    
 
-        case KV_DOWN:                // SNAKE move left
+        case KV_LEFT:                // SNAKE move left
             KeyValue = KV_NULL;    
-            LED_Handle(LED_8, LED_BLINK_SHORT);
             SkDir    = LEFT;
             fKT      = 1;
                 break;
@@ -700,7 +697,7 @@ static void _kv_judge_dir(void)
  *
  * Record        :
  * 1.Date        : 10/08/2016
- *   Author      : Mr_Liang
+ *   Author      : Mr_Liang     
  *   Modification: Created function
  *
  * 2.Date        : 10/13/2016
@@ -715,11 +712,10 @@ static void SnakeCalcCoor(void)
     _kv_judge_dir(); // judge botton input is valid or invalid.
 
     // get the coordinate of tail(the last node) before shift, 
-    // used to clear shadow of tail
+    // use to clear shadow of tail
     SkTailCoorX = Snake.Node[Snake.nNode - 1].X;
     SkTailCoorY = Snake.Node[Snake.nNode - 1].Y;
     SkTailDir   = Snake.Node[Snake.nNode - 1].Nd_Dir;
-
     
     for (i = Snake.nNode - 1; i > 0; --i)
     {
@@ -818,13 +814,13 @@ static void _draw_node_corner(u8 x, u8 y, NODE_DIR dir, ROT_DIR rotDir)
         {
             for (offsetY = 0; offsetY < 4; ++offsetY) 
             {
-                if (rotDir == CW)      //WEST
+                if (rotDir == CW)      // Clockwise
                 {
                     LcdDrawPoint(x + offsetX, 
                                  y + offsetY, 
                                  (Node_Corner[dir - 1][offsetX] >> offsetY) & 0x01);
                 }
-                else if (rotDir == COUNTER_CW) // EAST
+                else if (rotDir == COUNTER_CW)      // Counter ClockWise
                 {
 /*                  // mirror up and down, up side down, 上下镜像
                     LcdDrawPoint(x + offsetX, y + offsetY, 
@@ -845,13 +841,13 @@ static void _draw_node_corner(u8 x, u8 y, NODE_DIR dir, ROT_DIR rotDir)
         {
             for (offsetY = 0; offsetY < 4; ++offsetY) 
             {
-                if (rotDir == CW)      //WEST
+                if (rotDir == CW)       // Clockwise
                 {
                     LcdDrawPoint(x + offsetX, 
                                  y + offsetY, 
                                  (Node_Corner[dir - 1][offsetX] >> offsetY) & 0x01);
                 }
-                else if (rotDir == COUNTER_CW) // EAST
+                else if (rotDir == COUNTER_CW)  // Counter Clockwise
                 {
                     // mirror up and down, up side down, 上下镜像
                     LcdDrawPoint(x + offsetX, 
@@ -923,7 +919,7 @@ static void _draw_snake(void)
  * 3.Date        : 10/13/2016
  *   Author      : Mr_Liang
  *   Modification: VERSION 2.5
-                   Optimize algri, fixed disp corner node problem.
+                   Optimize algorithm, fixed disp corner node problem.
  *
  * 4.Date        : 10/14/2016
  *   Author      : Mr_Liang
@@ -1066,16 +1062,15 @@ static void SnakeDisp(void)
  *
  * 2.Date        : 10/17/2016
  *   Author      : Mr_Liang
- *   Modification: Judging head coincide with body start at the seventh node.
+ *   Modification: Judging head coincide with body start from the seventh node.
 *****************************************************************************/
 static void JudgeCollision(void)
 {
     bit fRST = 0;       // Reset flag
-    u8  i;
-    u8 xdata NodeCnt;
+    u8 NodeCnt;
 
-    // Judging wheather head node coincides with other nodes.
-    // Judging starts at the seventh node, because collision 
+    // Judging wheather head node coincides with other nodes or not.
+    // Collision censor starts from the seventh node, because collision 
     // could only happen with at least seven nodes.
     for (NodeCnt = 6; NodeCnt < Snake.nNode; ++NodeCnt)
     {
@@ -1099,9 +1094,9 @@ static void JudgeCollision(void)
         Delay_Xms(100);
         SnakeParamInit();
         ClrCanvas();
-        for (i = 0; i < FOOD_MAX; ++i)
+        for (NodeCnt = 0; NodeCnt < FOOD_MAX; ++NodeCnt)
         {
-            Food[i].State = IDLE;
+            Food[NodeCnt].State = IDLE;
         }
         LcdDrawStrNum(30, 0, 3, GmScore, OFF);
         LcdDrawStrNum(30, 0, 3, 0, ON);
@@ -1155,6 +1150,8 @@ static u8 JudgeGrowth(void)
 void SnakeGame_Main(void)
 {
     bit fGrowth;
+    u8 i;
+    u8 xdata Hertz = 0;
     
     pfCurrentFunc = &SnakeGame_Main;
 
@@ -1170,6 +1167,10 @@ void SnakeGame_Main(void)
         LcdClrGDRAM();
 
         SnakeParamInit();
+        for (i = 0; i < FOOD_MAX; ++i)
+        {
+            Food[i].State = IDLE;
+        }
         DrawBoundary();
         LcdDrawStrNum(30, 0, 3, 0, ON); // Draw Init Score
         _draw_snake();
@@ -1188,15 +1189,14 @@ void SnakeGame_Main(void)
     JudgeCollision();
     SnakeDisp();
 
-//    Delay_Xms(300);
-    Delay_Xms(30);
+//    Delay_Xms(300);g33
+    Delay_Xms(10);
 
     Hertz = 1000 / FreqCnt;
     UartSendDebugInfo("\r\n");
     UartSendDebugData(Hertz, DEC);  
     UartSendDebugInfo("Hz");
 
-/*
     if (KeyValue == KV_ESC) 
     {
         KeyValue = KV_NULL;     // 清除等待时按下的键值
@@ -1208,7 +1208,6 @@ void SnakeGame_Main(void)
  
         Menu_Games();
     }
-*/
 }
   
 /*    
